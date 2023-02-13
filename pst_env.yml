@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  postgres_db:
+    image: postgres:14.1-alpine
+    hostname: pstdb
+    environment:
+      - POSTGRES_USER=${USER_NAME}
+      - POSTGRES_PASSWORD=${USER_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+
+  pgadmin_inf:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${DEFAULT_MAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
+    depends_on:
+      - postgres_db
+    ports:
+      - 80:80
+
+
+volumes:
+  data:
