@@ -1,27 +1,16 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm.decl_api import DeclarativeMeta
 from utils.config import Enviroments
+from models.models import Base
 
 
 class BasePostgresORM:
-
-    Base: DeclarativeMeta = declarative_base()
-
     _instance = None
 
     def __init__(self) -> None:
         # load env's and init sql alchemy engine
-        enviroments = Enviroments()
-
-        DATABASE_URL = f'postgresql://{enviroments.database_user}:{enviroments.database_password}@{enviroments.database_host}/{enviroments.database_name}'
-        engine: Engine = create_engine(DATABASE_URL)
-        self.__session_local: function = sessionmaker(
-            bind=engine, autoflush=False, autocommit=False)
-
-        self.Base.metadata.create_all(bind=engine)
+        self.__enviroments = Enviroments()
 
     def __get_db(self) -> None:
         db = self.__session_local()
@@ -31,12 +20,18 @@ class BasePostgresORM:
         finally:
             db.close()
 
+    def make_schemas(self) -> None:
+        DATABASE_URL = f'postgresql://{self.__enviroments.database_user}:{self.__enviroments.database_password}@{self.__enviroments.database_host}/{self.__enviroments.database_name}'
+        self.__engine: Engine = create_engine(DATABASE_URL)
+        self.__session_local: function = sessionmaker(
+            bind=self.__engine, autoflush=False, autocommit=False)
+
+        Base.metadata.create_all(bind=self.__engine)
+
     # database object getter
     @property
-    def db(self) -> function:
+    def db(self):
         return self.__get_db
 
-    def __new__(cls):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+
+base_postgres_orm: BasePostgresORM = BasePostgresORM()
