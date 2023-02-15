@@ -13,7 +13,7 @@ class Enviroments(BaseSettings):
 
     secret_key: str
     algorithm: str
-    access_token_expires_minutes: str
+    access_token_expire_minutes: str
 
     aws_access_key_id: str
     aws_secret_access_key: str
