@@ -13,9 +13,6 @@ class UserInfo(Base):
     __tablename__ = 'UserInfo_Entity'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String, unique=True, nullable=False)
-    password = Column(String, unique=False, nullable=False)
-    profile_s3_uri = Column(String, unique=True, nullable=True)
     email = Column(String, unique=True, nullable=False,comment='user email')
     password = Column(String, unique=False, nullable=False,comment='user password')
     profile_s3_uri = Column(String, unique=True, nullable=False, comment='profile pic')

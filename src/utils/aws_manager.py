@@ -21,4 +21,4 @@ class AWSManager:
                                      aws_secret_access_key=self.__enviroments.aws_secret_access_key)
 
     def upload_file(self, file: bytes, key: str) -> None:
-        self.__s3.put_object(Bucket='airflow', Body=file, Key=key)
+        self.__s3.put_object(Bucket=self.__enviroments.s3_bucket_name, Body=file, Key=key)
