@@ -5,7 +5,7 @@ from utils.config import Enviroments
 from models.models import Base
 
 
-class BasePostgresORM:
+class __BasePostgresORM:
     _instance = None
 
     def __init__(self) -> None:
@@ -34,4 +34,4 @@ class BasePostgresORM:
         return self.__get_db
 
 
-base_postgres_orm: BasePostgresORM = BasePostgresORM()
+base_postgres_orm: __BasePostgresORM = __BasePostgresORM()
