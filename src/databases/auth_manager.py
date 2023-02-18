@@ -2,7 +2,9 @@ from sqlalchemy.orm import Session
 from utils.aws_manager import AWSManager
 from models.models import UserInfo
 from datetime import datetime
+from utils.password_manager import PasswordManager
 from utils.jwt_token_manager import JwtTokenManger
+from sqlalchemy import update
 
 
 class AuthManager:
@@ -10,35 +12,55 @@ class AuthManager:
     def __init__(self, db: Session) -> None:
         self.__db = db
         self.__aws = AWSManager()
+        self.__password_manager = PasswordManager()
         self.__token_manager = JwtTokenManger()
 
-    def register_login(self, auth_data: dict) -> dict:
+    def register(self, auth_data: dict, file: bytes) -> dict | None:
 
-        # check the user is there or not
+        # check if user exits
         check = self.__db.query(UserInfo).filter(
-            UserInfo.email == auth_data['email']).first()
+            UserInfo.email == auth_data['email'])
 
-        if check is None:
-            # make None profile photo in copy data
+        if not check.first():
 
-            auth_user: UserInfo = UserInfo(**auth_data)
+            # remove profile photo from copy data and add profile_s3_uri as None
+            copy_data: dict = auth_data.copy()
+            copy_data['profile_s3_uri'] = None
 
-            self.__db.add(auth_user)
+            # hash the password
+            copy_data['password'] = self.__password_manager.hash_password(
+                copy_data['password'])
+
+            # add this to db
+            user = UserInfo(**copy_data)
+
+            self.__db.add(user)
             self.__db.commit()
 
-            # get user id
-            user = self.__db.query(UserInfo).filter(
-                UserInfo.email == auth_data['email']).first()
+            # get user id first
+            user_info = self.__db.query(UserInfo).filter(
+                UserInfo.email == auth_data['email'])
 
-            # generate access token
-            access_token: str = self.__token_manager.generate_jwt_token(
-                {'user_id': user.id})
+            # upload profile photo to s3
+            s3_key: str = f'{user_info.first().id}/profile_pic/profile.png'
+
+            self.__aws.upload_file(file=file, key=s3_key)
+
+            # update user profile uri
+            copy_data['profile_s3_uri'] = s3_key
+
+            user_info.update(copy_data, synchronize_session=False)
+            self.__db.commit()
+
+            # create JWT token
+            access_token: str = self.__token_manager.generate_jwt_token(data={
+                'user_id': str(user_info.first().id)
+            })
 
             return {
                 'access_token': access_token,
                 'created_at': str(datetime.now())
             }
-        
-        # TODO :: ANMOL IMPLEMENT LOGIN LOGIC HERE
+
         else:
-            pass
+            return None

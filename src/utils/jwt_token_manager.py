@@ -19,7 +19,7 @@ class JwtTokenManger:
         data_to_be_encoded: dict = data.copy()
 
         data_to_be_encoded['exp'] = datetime.utcnow(
-        ) + timedelta(minutes=int(self.__enviroments.access_token_expires_minutes))
+        ) + timedelta(minutes=int(self.__enviroments.access_token_expire_minutes))
 
         return jwt.encode(data_to_be_encoded, self.__enviroments.secret_key, algorithm=self.__enviroments.algorithm)
 
