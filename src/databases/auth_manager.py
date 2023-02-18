@@ -64,3 +64,23 @@ class AuthManager:
 
         else:
             return None
+
+    def login(self, auth_data: dict) -> dict | None:
+        # get user
+        user = self.__db.query(UserInfo).filter(
+            UserInfo.email == auth_data['email']).first()
+        # if user is registered verify password and retrun access token with time otherwise return None
+        if user:
+            if self.__password_manager.verify_password(user_password=auth_data['password'], actual_password=user.password):
+                access_token: str = self.__token_manager.generate_jwt_token(data={
+                    'user_id': str(user.id)
+                })
+
+                return {
+                    'access_token': access_token,
+                    'created_at': str(datetime.now())
+                }
+            else:
+                return None
+        else:
+            return None
