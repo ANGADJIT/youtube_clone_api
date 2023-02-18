@@ -39,6 +39,16 @@ class AuthManager:
                 'created_at': str(datetime.now())
             }
         
-        # TODO :: ANMOL IMPLEMENT LOGIN LOGIC HERE
+      
         else:
-            pass
+            #get user
+            user: dict=self.__db.query(UserInfo).filter(UserInfo.email==auth_data['email']).first()
+            # generate access token
+            access_token: str = self.__token_manager.generate_jwt_token({'user_id': user.id})
+            
+            return{
+                'user_email': user.email,
+                'user_profile': user.profile_s3_uri,
+                'access_token': access_token,
+                'created_at': str(datetime.now())
+            }
