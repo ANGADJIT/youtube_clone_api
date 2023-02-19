@@ -18,7 +18,6 @@ class AuthRouter:
     def router(self) -> APIRouter:
         return self.__router
 
-
     def __register_routes(self) -> None:
 
         @self.__router.post('/register', status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
@@ -31,7 +30,16 @@ class AuthRouter:
             if result is None:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={
                                     'error': f'user with {auth.email} already exists'})
-            
+
             return result
 
-    # TODO @Anmol create login route here -> /login
+        @self.__router.post('/login', status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
+        def login(auth: AuthCreate = Depends(), db: Session = Depends(base_postgres_orm.db)):
+            auth_manager = AuthManager(db)
+
+            result: dict | None = auth_manager.login(auth_data=auth.dict())
+            if result is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                    'error': 'email or password is invalid'
+                })
+            return result
