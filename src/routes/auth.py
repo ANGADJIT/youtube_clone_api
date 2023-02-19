@@ -38,8 +38,10 @@ class AuthRouter:
             auth_manager = AuthManager(db)
 
             result: dict | None = auth_manager.login(auth_data=auth.dict())
+            
             if result is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
                     'error': 'email or password is invalid'
                 })
+
             return result
