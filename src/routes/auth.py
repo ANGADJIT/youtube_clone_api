@@ -34,4 +34,14 @@ class AuthRouter:
             
             return result
 
-    # TODO @Anmol create login route here -> /login
+        @self.__router.post('/login',status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
+        def login(auth: AuthCreate=Depends(),db:Session=Depends(base_postgres_orm.db)):
+            auth_manager=AuthManager(db)
+
+            result: dict | None = auth_manager.login(auth_data=auth.dict())
+            if result is None:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail={
+                    'login_error':'Email or password is invalid'
+                }) 
+            return result 
+           
