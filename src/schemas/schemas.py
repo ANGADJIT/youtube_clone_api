@@ -5,7 +5,7 @@ from typing import Optional
 class AuthCreate(BaseModel):
     email: EmailStr
     password: str
-    channel_name: Optional[str] = None
+    channel_name: str
 
 
 class AuthResponse(BaseModel):
