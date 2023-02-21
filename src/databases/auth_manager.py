@@ -4,7 +4,7 @@ from models.models import UserInfo
 from datetime import datetime
 from utils.password_manager import PasswordManager
 from utils.jwt_token_manager import JwtTokenManger
-from sqlalchemy import update
+from fastapi.security import OAuth2PasswordRequestForm
 
 
 class AuthManager:
@@ -15,7 +15,7 @@ class AuthManager:
         self.__password_manager = PasswordManager()
         self.__token_manager = JwtTokenManger()
 
-    def register(self, auth_data: dict, file: bytes) -> dict | None:
+    def register(self, auth_data: dict, file: bytes) -> bool:
 
         # check if user exits
         check = self.__db.query(UserInfo).filter(
@@ -52,26 +52,18 @@ class AuthManager:
             user_info.update(copy_data, synchronize_session=False)
             self.__db.commit()
 
-            # create JWT token
-            access_token: str = self.__token_manager.generate_jwt_token(data={
-                'user_id': str(user_info.first().id)
-            })
-
-            return {
-                'access_token': access_token,
-                'created_at': str(datetime.now())
-            }
+            return True
 
         else:
-            return None
+            return False
 
-    def login(self, auth_data: dict) -> dict | None:
+    def login(self, auth_data: OAuth2PasswordRequestForm) -> dict | None:
         # get user
         user = self.__db.query(UserInfo).filter(
-            UserInfo.email == auth_data['email']).first()
+            UserInfo.email == auth_data.username).first()
         # if user is registered verify password and retrun access token with time otherwise return None
         if user:
-            if self.__password_manager.verify_password(user_password=auth_data['password'], actual_password=user.password):
+            if self.__password_manager.verify_password(user_password=auth_data.password, actual_password=user.password):
                 access_token: str = self.__token_manager.generate_jwt_token(data={
                     'user_id': str(user.id)
                 })

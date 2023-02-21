@@ -7,8 +7,7 @@ import time
 from utils.config import Enviroments
 from fastapi.security import OAuth2PasswordBearer
 
-schema = OAuth2PasswordBearer(tokenUrl='auth/register-login')
-
+schema = OAuth2PasswordBearer(tokenUrl='auth/login')
 
 class JwtTokenManger:
 
