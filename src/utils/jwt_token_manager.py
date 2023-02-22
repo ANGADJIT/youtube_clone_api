@@ -6,8 +6,10 @@ from datetime import datetime
 import time
 from utils.config import Enviroments
 from fastapi.security import OAuth2PasswordBearer
+from jwt.exceptions import ExpiredSignatureError, DecodeError
 
 schema = OAuth2PasswordBearer(tokenUrl='auth/login')
+
 
 class JwtTokenManger:
 
@@ -28,19 +30,13 @@ class JwtTokenManger:
             payload: dict = jwt.decode(token, self.__enviroments.secret_key, algorithms=[
                                        self.__enviroments.algorithm])
 
-            if len(list(payload.keys())) == 1:
-                raise credential_exception
-
-            elif self.__check_token_expiration(payload['exp']):
-                raise expiration_exception
-
             return payload
 
-        except PyJWTError:
+        except DecodeError:
             raise credential_exception
-
-    def __check_token_expiration(self, exp: timedelta) -> bool:
-        return exp < time.time()
+        
+        except ExpiredSignatureError:
+            raise expiration_exception
 
     def get_current_user(self, token: str = Depends(schema)) -> dict:
         credentials_exception = HTTPException(
