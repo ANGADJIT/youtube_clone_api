@@ -52,11 +52,17 @@ class AuthRouter:
         @self.__router.post('/refresh', status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
         def refresh(refresh_data: RefreshToken):
 
-            result: str | None = self.__token_manager.refresh_token(
+            result: dict | None = self.__token_manager.refresh_token(
                 token=refresh_data.token, user_id=refresh_data.user_id)
-
             if result is None:
                 return Response(status_code=status.HTTP_409_CONFLICT)
 
             else:
                 return result
+        @self.__router.get('/dependent_test_route',status_code=status.HTTP_201_CREATED)
+        def check_refresh(token:str):
+                user: dict | None= self.__token_manager.get_current_user(token) 
+                return user
+            
+
+

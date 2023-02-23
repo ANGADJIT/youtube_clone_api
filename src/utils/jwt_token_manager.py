@@ -46,7 +46,7 @@ class JwtTokenManger:
 
         return self.__verify_token(token, credentials_exception, expiration_exception=expiration_exception)
 
-    def refresh_token(self, token: str, user_id: str) -> str | None:
+    def refresh_token(self, token: str, user_id: str) -> dict | None:
 
         try:
             self.get_current_user(token=token)
@@ -61,7 +61,10 @@ class JwtTokenManger:
             elif e.status_code == status.HTTP_400_BAD_REQUEST:
 
                 # generat new token
-                new_token: str = self.__token_manager.generate_jwt_token(
+                new_token: str = self.generate_jwt_token(
                     data={'user_id': user_id})
 
-                return new_token
+                return {
+                    'access_token': new_token,
+                    'created_at': str(datetime.now())
+                }
