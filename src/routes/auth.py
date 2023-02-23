@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Response, status
 from databases.auth_manager import AuthManager
-from schemas.schemas import AuthCreate, AuthResponse
+from schemas.schemas import AuthCreate, AuthResponse, RefreshToken
 from sqlalchemy.orm import Session
+from utils.jwt_token_manager import JwtTokenManger
 from fastapi.security import OAuth2PasswordRequestForm
 from utils.base_postgres_orm import base_postgres_orm
 
@@ -10,6 +11,7 @@ class AuthRouter:
 
     def __init__(self) -> None:
         self.__router: APIRouter = APIRouter(prefix='/auth', tags=['Auth'])
+        self.__token_manager = JwtTokenManger()
 
         # register routes
         self.__register_routes()
@@ -46,3 +48,15 @@ class AuthRouter:
                 })
 
             return result
+
+        @self.__router.post('/refresh', status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
+        def refresh(refresh_data: RefreshToken):
+
+            result: str | None = self.__token_manager.refresh_token(
+                token=refresh_data.token, user_id=refresh_data.user_id)
+
+            if result is None:
+                return Response(status_code=status.HTTP_409_CONFLICT)
+
+            else:
+                return result
