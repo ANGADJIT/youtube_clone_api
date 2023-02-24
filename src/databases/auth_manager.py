@@ -15,7 +15,7 @@ class AuthManager:
         self.__password_manager = PasswordManager()
         self.__token_manager = JwtTokenManger()
 
-    def register(self, auth_data: dict, file: bytes) -> bool:
+    def register(self, auth_data: dict, file: bytes) -> dict | None:
 
         # check if user exits
         check = self.__db.query(UserInfo).filter(
@@ -52,10 +52,10 @@ class AuthManager:
             user_info.update(copy_data, synchronize_session=False)
             self.__db.commit()
 
-            return True
+            return {'user_id': user_info.first().id, 'created_at': str(datetime.now())}
 
         else:
-            return False
+            return None
 
     def login(self, auth_data: OAuth2PasswordRequestForm) -> dict | None:
         # get user
