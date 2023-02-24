@@ -14,3 +14,8 @@ class AuthResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class RefreshToken(BaseModel):
+
+    token: str
+    user_id: str

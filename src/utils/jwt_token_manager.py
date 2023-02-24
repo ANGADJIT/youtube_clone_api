@@ -1,5 +1,4 @@
 import jwt
-from jwt import PyJWTError
 from datetime import timedelta
 from fastapi import Depends, HTTPException, status
 from datetime import datetime
@@ -34,7 +33,7 @@ class JwtTokenManger:
 
         except DecodeError:
             raise credential_exception
-        
+
         except ExpiredSignatureError:
             raise expiration_exception
 
@@ -46,3 +45,26 @@ class JwtTokenManger:
             status_code=status.HTTP_400_BAD_REQUEST, detail='token expired')
 
         return self.__verify_token(token, credentials_exception, expiration_exception=expiration_exception)
+
+    def refresh_token(self, token: str, user_id: str) -> dict | None:
+
+        try:
+            self.get_current_user(token=token)
+
+            return None
+
+        except HTTPException as e:
+
+            if e.status_code == status.HTTP_404_NOT_FOUND:
+                raise e
+
+            elif e.status_code == status.HTTP_400_BAD_REQUEST:
+
+                # generat new token
+                new_token: str = self.generate_jwt_token(
+                    data={'user_id': user_id})
+
+                return {
+                    'access_token': new_token,
+                    'created_at': str(datetime.now())
+                }
