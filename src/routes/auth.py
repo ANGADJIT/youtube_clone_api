@@ -59,10 +59,7 @@ class AuthRouter:
 
             else:
                 return result
-        @self.__router.get('/dependent_test_route',status_code=status.HTTP_201_CREATED)
-        def check_refresh(token:str):
-                user: dict | None= self.__token_manager.get_current_user(token) 
-                return user
+      
             
 
 
