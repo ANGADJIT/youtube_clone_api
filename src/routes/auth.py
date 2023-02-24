@@ -27,14 +27,14 @@ class AuthRouter:
         def register(auth: AuthCreate = Depends(), file: UploadFile = File(...), db: Session = Depends(base_postgres_orm.db)):
             auth_manager = AuthManager(db)
 
-            result: bool = auth_manager.register(
+            result: dict | None = auth_manager.register(
                 auth_data=auth.dict(), file=file.file)
 
-            if not result:
+            if result is None:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={
                                     'error': f'user with {auth.email} already exists'})
 
-            return Response(status_code=status.HTTP_201_CREATED)
+            return result
 
         @self.__router.post('/login', status_code=status.HTTP_201_CREATED, response_model=AuthResponse)
         def login(auth: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(base_postgres_orm.db)):
@@ -59,7 +59,3 @@ class AuthRouter:
 
             else:
                 return result
-      
-            
-
-
