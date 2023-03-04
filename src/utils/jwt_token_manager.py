@@ -68,3 +68,10 @@ class JwtTokenManger:
                     'access_token': new_token,
                     'created_at': str(datetime.now())
                 }
+
+    def authorize_websocket(self, bearer_token: str) -> dict:
+        # get token from header value
+        token: str = bearer_token.split(' ')[1]
+
+        # authorize user with token
+        return self.get_current_user(token)

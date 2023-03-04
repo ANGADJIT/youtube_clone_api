@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from utils.enums import VideoType
 
-
+# for Auth
 class AuthCreate(BaseModel):
     email: EmailStr
     password: str
@@ -25,3 +25,10 @@ class RefreshToken(BaseModel):
 class AuthCreatResponse(BaseModel):
     user_id: str
     created_at: str
+
+# for Videos
+class VideoCreate(BaseModel):
+
+    video_name: str
+    description: str
+    video_type: VideoType
