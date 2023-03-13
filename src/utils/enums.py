@@ -1,7 +1,5 @@
 from enum import Enum
 
-# MUSIC,DANCE,COMEDY,INFORMATIONAL,EDUCATIONAL,HEALTH_CARE
-
 
 class VideoType(Enum):
 

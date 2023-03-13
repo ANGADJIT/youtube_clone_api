@@ -3,7 +3,7 @@ from fastapi.websockets import WebSocket
 from sqlalchemy.orm import Session
 from utils.jwt_token_manager import JwtTokenManger
 from utils.base_postgres_orm import base_postgres_orm
-from time import sleep
+from databases.videos_manager import VideosManager
 
 
 class VideosRouter:
@@ -29,7 +29,13 @@ class VideosRouter:
         async def upload(websocket: WebSocket, db: Session = Depends(base_postgres_orm.db)):
             await websocket.accept()
 
-            # headers: dict = dict(websocket.headers)
+            headers: dict = dict(websocket.headers)
+            manager = VideosManager(db=db, headers=headers)
 
-            # # get video
-            video: bytes = await websocket.receive_bytes()
+            # get video data
+            video_data = await websocket.receive_json()
+
+            converted_videos: dict = await manager.process_video(
+                video_data, websocket=websocket)
+
+            await websocket.send_json({'keys': list(converted_videos.keys())})
