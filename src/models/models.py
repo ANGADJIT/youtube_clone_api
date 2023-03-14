@@ -17,7 +17,7 @@ class UserInfo(Base):
     password = Column(String, unique=False, nullable=False,
                       comment='user password')
     channel_name = Column(String, unique=False, nullable=False,
-                      comment='user channel name')
+                          comment='user channel name')
     profile_s3_uri = Column(String, unique=True,
                             nullable=True, comment='profile pic')
 
@@ -40,6 +40,7 @@ class Videos(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     video_name = Column(String, unique=True, nullable=False,
                         comment='name of the video')
+    user_id = Column(UUID, ForeignKey('UserInfo_Entity.id'), comment='user id',nullable=False)
     video_1080p_s3_uri = Column(
         String, unique=False, nullable=True, comment='1080p quality video s3 uri')
     video_720p_s3_uri = Column(
