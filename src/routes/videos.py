@@ -35,7 +35,7 @@ class VideosRouter:
             # get video data
             video_data = await websocket.receive_json()
 
-            converted_videos: dict = await manager.process_video(
+            await manager.process_video(
                 video_data, websocket=websocket)
 
-            await websocket.send_json({'keys': list(converted_videos.keys())})
+            await websocket.send_json({'is_completed': True})

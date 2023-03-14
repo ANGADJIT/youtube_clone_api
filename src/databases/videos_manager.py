@@ -8,6 +8,8 @@ from utils.temporary_files_manager import TemporaryFilesManager
 from moviepy.editor import VideoFileClip
 from schemas.schemas import VideoCreate
 from utils.raw_video_manager import raw_videos_manager
+from models.models import Videos
+from uuid import uuid4
 
 
 class VideosManager:
@@ -31,6 +33,27 @@ class VideosManager:
 
         return auth_data['user_id']
 
+    def __add_video_data(self, video_model: VideoCreate, videos_uris: dict):
+
+        video_data: dict = {
+            'video_name': video_model.video_name,
+            'video_1080p_s3_uri': videos_uris.get('1080P'),
+            'video_720p_s3_uri': videos_uris.get('720P'),
+            'video_480p_s3_uri': videos_uris.get('480P'),
+            'video_360p_s3_uri': videos_uris.get('360P'),
+            'video_240p_s3_uri': videos_uris.get('240P'),
+            'video_144p_s3_uri': videos_uris.get('144P'),
+            'thumbnail_s3_uri': videos_uris.get('thumbnail_s3_uri'),
+            'user_id': self.__user_id,
+            'video_description': video_model.description,
+            'video_type': str(video_model.video_type),
+        }
+
+        video = Videos(**video_data)
+
+        self.__db.add(video)
+        self.__db.commit()
+
     async def process_video(self, video_data: dict, websocket: WebSocket) -> dict:
 
         try:
@@ -53,13 +76,49 @@ class VideosManager:
 
             return {
                 'convertions': videos_quality_list[resolution],
-                'file_name': file_name
+                'file_name': file_name,
+                'actual_resolution': resolution
             }
 
-        async def convert_videos(video_data: list) -> dict:
+        async def convert_videos(video_data: dict) -> None:
+
+            # open file in bytes
+            video_id: str = str(uuid4())
+
+            # upload thumbnail
+            thumbnail: bytes | None = raw_videos_manager.get_video(
+                video_model.thumbnail_upload_key)
+
+            if thumbnail is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                    'error': 'invalid thumbnail upload key'})
+
+            thumbnail_s3_uri: str = f'{self.__user_id}/thumbanails/{video_id}/thumbnail.png'
+
+            self.__aws.upload_file(file=thumbnail, key=thumbnail_s3_uri)
+
+            # list of all uris
+            videos_uris: dict = {
+                '1080P': None,
+                '720P': None,
+                '480P': None,
+                '360P': None,
+                '240P': None,
+                '144P': None,
+                'thumbnail_s3_uri': thumbnail_s3_uri
+            }
 
             file_name: str = video_data['file_name']
             convertions: list[tuple] = video_data['convertions']
+            actual_resolution: tuple = video_data['actual_resolution']
+
+            # before converting upload actual video
+            actual_video_s3_key: str = f'{self.__user_id}/videos/{video_id}/{quality[actual_resolution]}.mp4'
+            videos_uris['1080P'] = actual_video_s3_key
+            actual_video: bytes | None = raw_videos_manager.get_video(
+                video_model.video_upload_key)
+
+            self.__aws.upload_file(file=actual_video, key=actual_video_s3_key)
 
             with VideoFileClip(file_name) as vid:
 
@@ -74,14 +133,19 @@ class VideosManager:
                         logger=None,
                     )
 
-                    # opne file in bytes
+                    key: str = f'{self.__user_id}/videos/{video_id}/{quality[resolution]}.mp4'
+
                     with open(path, 'rb') as file:
                         self.__aws.upload_file(
-                            file=file.read(), key=f'videos/{quality[resolution]}.mp4')
+                            file=file.read(), key=key)
+
+                    videos_uris[quality[resolution]] = key
 
                     await websocket.send_json({'video_resolution': quality[resolution], 'is_processed': True})
 
-            return video_data
+            # now add all data
+            self.__add_video_data(video_model=video_model,
+                                  videos_uris=videos_uris)
 
         # get convertion data
         video: bytes = raw_videos_manager.get_video(
@@ -89,12 +153,12 @@ class VideosManager:
 
         if video is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'invalid video upload key'})
+
+        if video is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
                                 'upload_key not found'})
 
         data: dict = get_video_convertions_data(video)
 
-        # convert videos
-        videos: dict = await convert_videos(video_data=data)
-
-        return videos
-
+        await convert_videos(video_data=data)
