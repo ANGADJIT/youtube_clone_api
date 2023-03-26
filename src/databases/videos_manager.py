@@ -113,12 +113,12 @@ class VideosManager:
             actual_resolution: tuple = video_data['actual_resolution']
 
             # before converting upload actual video
-            actual_video_s3_key: str = f'{self.__user_id}/videos/{video_id}/{quality[actual_resolution]}.mp4'
-            videos_uris['1080P'] = actual_video_s3_key
+            actual_video_s3_uri: str = f'{self.__user_id}/videos/{video_id}/{quality[actual_resolution]}.mp4'
+            videos_uris[quality[actual_resolution]] = actual_video_s3_uri
             actual_video: bytes | None = raw_videos_manager.get_video(
                 video_model.video_upload_key)
 
-            self.__aws.upload_file(file=actual_video, key=actual_video_s3_key)
+            self.__aws.upload_file(file=actual_video, key=actual_video_s3_uri)
 
             with VideoFileClip(file_name) as vid:
 
