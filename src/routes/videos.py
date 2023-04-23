@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends
 from fastapi.websockets import WebSocket
 from sqlalchemy.orm import Session
+from models.models import Videos
+from schemas.schemas import VideoResponse
 from utils.jwt_token_manager import JwtTokenManger
 from utils.base_postgres_orm import base_postgres_orm
 from databases.videos_manager import VideosManager
+from typing import List
 
 
 class VideosRouter:
@@ -21,9 +24,13 @@ class VideosRouter:
 
     def __register_routes(self) -> None:
 
-        @self.__router.get('/all')
+        @self.__router.get('/all', response_model=List[VideoResponse])
         def videos(db: Session = Depends(base_postgres_orm.db), auth_data: dict = Depends(self.__token_manager.get_current_user)):
-            return auth_data
+            manager = VideosManager(db=db, headers={}, for_websocket=False)
+
+            videos: List[Videos] = manager.get_all(db=db)
+
+            return videos
 
         @self.__router.websocket('/upload')
         async def upload(websocket: WebSocket, db: Session = Depends(base_postgres_orm.db)):

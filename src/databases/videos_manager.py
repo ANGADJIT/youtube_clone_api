@@ -10,17 +10,19 @@ from schemas.schemas import VideoCreate
 from utils.raw_video_manager import raw_videos_manager
 from models.models import Videos
 from uuid import uuid4
+from typing import List
 
 
 class VideosManager:
 
-    def __init__(self, db: Session, headers: dict) -> None:
+    def __init__(self, db: Session, headers: dict, for_websocket: bool = True) -> None:
         self.__db = db
         self.__aws = AWSManager()
         self.__token_manager = JwtTokenManger()
         self.__files_manager = TemporaryFilesManager('assets/tempfiles')
 
-        self.__user_id: str = self.__authorize_user(headers)
+        if for_websocket:
+            self.__user_id: str = self.__authorize_user(headers)
 
     def __authorize_user(self, headers: dict) -> str:
 
@@ -162,3 +164,9 @@ class VideosManager:
         data: dict = get_video_convertions_data(video)
 
         await convert_videos(video_data=data)
+
+    # get all videos
+    def get_all(self, db: Session) -> list[Videos]:
+        videos: List[Videos] = db.query(Videos).all()
+
+        return videos
