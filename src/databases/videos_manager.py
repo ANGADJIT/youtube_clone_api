@@ -11,6 +11,8 @@ from utils.raw_video_manager import raw_videos_manager
 from models.models import Videos
 from uuid import uuid4
 from typing import List
+from models.models import Subscription
+from sqlalchemy import and_
 
 
 class VideosManager:
@@ -166,7 +168,27 @@ class VideosManager:
         await convert_videos(video_data=data)
 
     # get all videos
-    def get_all(self, db: Session) -> list[Videos]:
-        videos: List[Videos] = db.query(Videos).all()
+    def get_all(self) -> list[Videos]:
+        videos: List[Videos] = self.__db.query(Videos).all()
 
         return videos
+
+    def subscribe(self, subscription_data: dict) -> None:
+        subscription: Subscription | None = self.__db.query(Subscription).filter(and_(Subscription.user_subscribed_to ==
+                                                                                      subscription_data['user_subscribed_to'], Subscription.user_who_subcribed == subscription_data['user_who_subcribed'])).first()
+
+        if subscription is None:
+            subscription: Subscription = Subscription(**subscription_data)
+
+            self.__db.add(subscription)
+            self.__db.commit()
+
+        else:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={
+                'error': 'Already subscribed'})
+
+    def is_subscribed(self, subscription_data: dict) -> bool:
+        subscription: Subscription | None = self.__db.query(Subscription).filter(and_(Subscription.user_subscribed_to ==
+        
+        if subscription is None:
+            return  fa                                                                                                                                 subscription_data['user_subscribed_to'], Subscription.user_who_subcribed == subscription_data['user_who_subcribed'])).first()

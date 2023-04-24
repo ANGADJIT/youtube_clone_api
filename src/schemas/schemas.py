@@ -59,3 +59,14 @@ class VideoResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UrlPayload(BaseModel):
+    object_uri: str
+    for_video: bool = True
+
+
+class UrlResponse(BaseModel):
+
+    url: str
+    expiration_in_minutes: int
