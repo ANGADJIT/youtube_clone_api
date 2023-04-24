@@ -25,7 +25,7 @@ class AWSManager:
         self.__s3.put_object(
             Bucket=self.__enviroments.s3_bucket_name, Body=file, Key=key)
 
-    def generate_link(self, object_name: str, for_video: str) -> str:
+    def generate_link(self, object_name: str, for_video: bool) -> str:
         url: str = self.__s3.generate_presigned_url(
             ClientMethod='get_object',
             Params={'Bucket': self.__enviroments.s3_bucket_name,

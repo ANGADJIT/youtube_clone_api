@@ -78,3 +78,7 @@ class SubscriptionCheck(BaseModel):
 class SubscriptionCount(BaseModel):
     count: int
     counted_at: str
+
+class UserChannelResponse(BaseModel):
+    channel_name: str
+    profile_url: str

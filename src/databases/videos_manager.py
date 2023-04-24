@@ -13,6 +13,8 @@ from uuid import uuid4
 from typing import List
 from models.models import Subscription
 from sqlalchemy import and_
+from models.models import UserInfo
+from utils.enums import VideoType
 
 
 class VideosManager:
@@ -220,3 +222,49 @@ class VideosManager:
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
                                 'error': 'Video ID not found'})
+
+    def get_channel_info(self, user_id: str) -> dict:
+        try:
+            user_info: UserInfo = self.__db.query(
+                UserInfo).filter(UserInfo.id == user_id).first()
+
+            return {
+                'channel_name': user_info.channel_name,
+                'profile_url': self.__aws.generate_link(user_info.profile_s3_uri, for_video=False)
+            }
+
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'User ID not found'})
+
+    def get_videos_recommendations(self, video_type: str) -> list[Videos]:
+
+        try:
+            # just for verification
+            VideoType(video_type)
+
+            videos: List[Videos] = self.__db.query(Videos).filter(
+                Videos.video_type == video_type).all()
+
+            return videos
+
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'Video TYPE not found'})
+
+    def search(self, search_pattern: str) -> list[Videos]:
+        videos: List[Videos] = self.__db.query(Videos).filter(
+            Videos.video_name.like(f'%{search_pattern}%')).all()
+
+        return videos
+
+    def get_subscription_videos(self, user_who_subscribed: str) -> list[Videos]:
+
+        subscription_videos: List[Videos] = self.__db.query(Videos).filter(
+            Videos.user_id.in_(
+                self.__db.query(Subscription.user_subscribed_to).filter(
+                    Subscription.user_who_subcribed == user_who_subscribed)
+            )
+        ).all()
+
+        return subscription_videos
