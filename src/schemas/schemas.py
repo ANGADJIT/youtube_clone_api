@@ -70,3 +70,11 @@ class UrlResponse(BaseModel):
 
     url: str
     expiration_in_minutes: int
+
+
+class SubscriptionCheck(BaseModel):
+    is_subscribed: bool
+
+class SubscriptionCount(BaseModel):
+    count: int
+    counted_at: str

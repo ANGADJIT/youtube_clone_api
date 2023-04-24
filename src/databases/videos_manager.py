@@ -189,6 +189,25 @@ class VideosManager:
 
     def is_subscribed(self, subscription_data: dict) -> bool:
         subscription: Subscription | None = self.__db.query(Subscription).filter(and_(Subscription.user_subscribed_to ==
-        
+                                                                                      subscription_data['user_subscribed_to'], Subscription.user_who_subcribed == subscription_data['user_who_subcribed'])).first()
+
         if subscription is None:
-            return  fa                                                                                                                                 subscription_data['user_subscribed_to'], Subscription.user_who_subcribed == subscription_data['user_who_subcribed'])).first()
+            return False
+        else:
+            return True
+
+    def get_subscription_count(self, user_subscribed_to: str) -> int:
+        try:
+            count: int = self.__db.query(Subscription).filter(
+                Subscription.user_subscribed_to == user_subscribed_to).count()
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'ID not found'})
+
+        return count
+
+    def like_video(self,video_id: str) -> None:
+        video: Videos | None = self.__db.query(Videos).filter(Videos.id == id).first()
+
+        if video is not None:
+            video_copy: dict = video
