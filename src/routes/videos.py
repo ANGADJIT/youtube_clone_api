@@ -68,6 +68,14 @@ class VideosRouter:
                 'counted_at': counted_at
             }
 
+        @self.__router.post('/like/{video_id}')
+        def like_video(video_id: str, db: Session = Depends(base_postgres_orm.db), auth_data: dict = Depends(self.__token_manager.get_current_user)):
+            manager = VideosManager(db=db, headers={}, for_websocket=False)
+
+            manager.like_video(video_id=video_id)
+
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+
         @self.__router.websocket('/upload')
         async def upload(websocket: WebSocket, db: Session = Depends(base_postgres_orm.db)):
             await websocket.accept()

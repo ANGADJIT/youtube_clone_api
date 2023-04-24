@@ -206,8 +206,17 @@ class VideosManager:
 
         return count
 
-    def like_video(self,video_id: str) -> None:
-        video: Videos | None = self.__db.query(Videos).filter(Videos.id == id).first()
+    def like_video(self, video_id: str) -> None:
+        video = self.__db.query(Videos).filter(Videos.id == video_id)
 
         if video is not None:
-            video_copy: dict = video
+            video_copy: dict = video.first().as_dict()
+
+            video_copy['video_likes'] += 1
+
+            video.update(video_copy, synchronize_session=False)
+            self.__db.commit()
+
+        else:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'Video ID not found'})
