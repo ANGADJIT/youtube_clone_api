@@ -10,17 +10,23 @@ from schemas.schemas import VideoCreate
 from utils.raw_video_manager import raw_videos_manager
 from models.models import Videos
 from uuid import uuid4
+from typing import List
+from models.models import Subscription
+from sqlalchemy import and_
+from models.models import UserInfo
+from utils.enums import VideoType
 
 
 class VideosManager:
 
-    def __init__(self, db: Session, headers: dict) -> None:
+    def __init__(self, db: Session, headers: dict, for_websocket: bool = True) -> None:
         self.__db = db
         self.__aws = AWSManager()
         self.__token_manager = JwtTokenManger()
         self.__files_manager = TemporaryFilesManager('assets/tempfiles')
 
-        self.__user_id: str = self.__authorize_user(headers)
+        if for_websocket:
+            self.__user_id: str = self.__authorize_user(headers)
 
     def __authorize_user(self, headers: dict) -> str:
 
@@ -162,3 +168,103 @@ class VideosManager:
         data: dict = get_video_convertions_data(video)
 
         await convert_videos(video_data=data)
+
+    # get all videos
+    def get_all(self) -> list[Videos]:
+        videos: List[Videos] = self.__db.query(Videos).all()
+
+        return videos
+
+    def subscribe(self, subscription_data: dict) -> None:
+        subscription: Subscription | None = self.__db.query(Subscription).filter(and_(Subscription.user_subscribed_to ==
+                                                                                      subscription_data['user_subscribed_to'], Subscription.user_who_subcribed == subscription_data['user_who_subcribed'])).first()
+
+        if subscription is None:
+            subscription: Subscription = Subscription(**subscription_data)
+
+            self.__db.add(subscription)
+            self.__db.commit()
+
+        else:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={
+                'error': 'Already subscribed'})
+
+    def is_subscribed(self, subscription_data: dict) -> bool:
+        subscription: Subscription | None = self.__db.query(Subscription).filter(and_(Subscription.user_subscribed_to ==
+                                                                                      subscription_data['user_subscribed_to'], Subscription.user_who_subcribed == subscription_data['user_who_subcribed'])).first()
+
+        if subscription is None:
+            return False
+        else:
+            return True
+
+    def get_subscription_count(self, user_subscribed_to: str) -> int:
+        try:
+            count: int = self.__db.query(Subscription).filter(
+                Subscription.user_subscribed_to == user_subscribed_to).count()
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'ID not found'})
+
+        return count
+
+    def like_video(self, video_id: str) -> None:
+        video = self.__db.query(Videos).filter(Videos.id == video_id)
+
+        if video is not None:
+            video_copy: dict = video.first().as_dict()
+
+            video_copy['video_likes'] += 1
+
+            video.update(video_copy, synchronize_session=False)
+            self.__db.commit()
+
+        else:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'Video ID not found'})
+
+    def get_channel_info(self, user_id: str) -> dict:
+        try:
+            user_info: UserInfo = self.__db.query(
+                UserInfo).filter(UserInfo.id == user_id).first()
+
+            return {
+                'channel_name': user_info.channel_name,
+                'profile_url': self.__aws.generate_link(user_info.profile_s3_uri, for_video=False)
+            }
+
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'User ID not found'})
+
+    def get_videos_recommendations(self, video_type: str) -> list[Videos]:
+
+        try:
+            # just for verification
+            VideoType(video_type)
+
+            videos: List[Videos] = self.__db.query(Videos).filter(
+                Videos.video_type == video_type).all()
+
+            return videos
+
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'Video TYPE not found'})
+
+    def search(self, search_pattern: str) -> list[Videos]:
+        videos: List[Videos] = self.__db.query(Videos).filter(
+            Videos.video_name.like(f'%{search_pattern}%')).all()
+
+        return videos
+
+    def get_subscription_videos(self, user_who_subscribed: str) -> list[Videos]:
+
+        subscription_videos: List[Videos] = self.__db.query(Videos).filter(
+            Videos.user_id.in_(
+                self.__db.query(Subscription.user_subscribed_to).filter(
+                    Subscription.user_who_subcribed == user_who_subscribed)
+            )
+        ).all()
+
+        return subscription_videos

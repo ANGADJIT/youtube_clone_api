@@ -2,4 +2,4 @@
 __pycache__
 .env
 src/assets
-node_modules
+libs
