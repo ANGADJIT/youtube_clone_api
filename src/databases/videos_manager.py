@@ -78,6 +78,19 @@ class VideosManager:
             video_file = VideoFileClip(file_name)
             resolution: tuple = tuple(video_file.size)
 
+            if 1080 in resolution:
+                resolution = (1080, 1920)
+            elif 720 in resolution:
+                resolution = (1280, 720)
+            elif 480 in resolution:
+                resolution = (480, 854)
+            elif 360 in resolution:
+                resolution = (640, 360)
+            elif 240 in resolution:
+                resolution = (426, 240)
+            elif 144 in resolution:
+                resolution = (256, 144)
+
             video_file.close()
 
             return {
