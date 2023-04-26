@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response, status, Query
 from fastapi.websockets import WebSocket
 from sqlalchemy.orm import Session
 from models.models import Videos
-from schemas.schemas import VideoResponse, SubscriptionCheck, SubscriptionCount, UserChannelResponse
+from schemas.schemas import UserProfileResponse, VideoResponse, SubscriptionCheck, SubscriptionCount, UserChannelResponse, Likes
 from utils.jwt_token_manager import JwtTokenManger
 from utils.base_postgres_orm import base_postgres_orm
 from databases.videos_manager import VideosManager
@@ -110,6 +110,28 @@ class VideosRouter:
                 user_who_subscribed=auth_data['user_id'])
 
             return subscription_videos
+
+        @self.__router.get('/user_profile_photo', response_model=UserProfileResponse)
+        def get_user_profile_photo(db: Session = Depends(base_postgres_orm.db), auth_data: dict = Depends(self.__token_manager.get_current_user)):
+            manager = VideosManager(db=db, headers={}, for_websocket=False)
+
+            url: str = manager.get_user_profile(user_id=auth_data['user_id'])
+
+            return {
+                'profile_url': url
+            }
+
+        @self.__router.get('/likes/{video_id}', response_model=Likes)
+        def get_likes(video_id: str, db: Session = Depends(base_postgres_orm.db), auth_data: dict = Depends(self.__token_manager.get_current_user)):
+            manager = VideosManager(db=db, headers={}, for_websocket=False)
+
+            likes: int = manager.get_likes(video_id=video_id)
+            counted_at: str = str(datetime.now())
+
+            return {
+                'likes': likes,
+                'counted_at': counted_at
+            }
 
         @self.__router.websocket('/upload')
         async def upload(websocket: WebSocket, db: Session = Depends(base_postgres_orm.db)):

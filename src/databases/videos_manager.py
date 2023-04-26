@@ -78,17 +78,17 @@ class VideosManager:
             video_file = VideoFileClip(file_name)
             resolution: tuple = tuple(video_file.size)
 
-            if 1080 in resolution:
+            if 1080 in resolution or 1920 in resolution:
                 resolution = (1080, 1920)
-            elif 720 in resolution:
+            elif 720 in resolution or 1280 in resolution:
                 resolution = (1280, 720)
-            elif 480 in resolution:
+            elif 480 in resolution or 854 in resolution:
                 resolution = (480, 854)
-            elif 360 in resolution:
+            elif 360 in resolution or 640 in resolution:
                 resolution = (640, 360)
-            elif 240 in resolution:
+            elif 240 in resolution or 426 in resolution:
                 resolution = (426, 240)
-            elif 144 in resolution:
+            elif 144 in resolution or 256 in resolution:
                 resolution = (256, 144)
 
             video_file.close()
@@ -281,3 +281,19 @@ class VideosManager:
         ).all()
 
         return subscription_videos
+
+    def get_user_profile(self, user_id: str) -> str:
+        uri: str = self.__db.query(UserInfo).filter(
+            UserInfo.id == user_id).first().profile_s3_uri
+
+        return self.__aws.generate_link(object_name=uri, for_video=False)
+
+    def get_likes(self, video_id: str) -> int:
+        video: Videos = self.__db.query(Videos).filter(
+            Videos.id == video_id).first()
+
+        if video is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                'error': 'Video ID not found'})
+
+        return video.video_likes

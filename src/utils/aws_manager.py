@@ -1,5 +1,6 @@
 import boto3
 from utils.config import Enviroments
+import socket
 
 
 class AWSManager:
@@ -9,8 +10,11 @@ class AWSManager:
 
         # aws cred init
         if self.__enviroments.server_type == 'DEV':
+            hostname: str = socket.gethostname()
+            host: str = socket.gethostbyname(hostname)
+
             self.__s3 = boto3.client('s3',
-                                     endpoint_url='http://localhost:9000',
+                                     endpoint_url=f'http://{host}:9000',
                                      region_name='us-east-1',
                                      aws_access_key_id=self.__enviroments.aws_access_key_id,
                                      aws_secret_access_key=self.__enviroments.aws_secret_access_key)
