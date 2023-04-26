@@ -89,6 +89,11 @@ class UserChannelResponse(BaseModel):
 class UserProfileResponse(BaseModel):
     profile_url: str
 
+
+class ChannelProfileResponse(UserProfileResponse):
+    pass
+
+
 class Likes(BaseModel):
     likes: int
     counted_at: str
