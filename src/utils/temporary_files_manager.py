@@ -26,9 +26,12 @@ class TemporaryFilesManager:
 
         return f'{self.__dir_path}/{file_name}'
 
-    def get_video_bytes(self,file_name: str) -> bytes:
-        with open(file_name,'rb') as video:
+    def get_video_bytes(self, file_name: str) -> bytes:
+        with open(file_name, 'rb') as video:
             return video.read()
 
     def __del__(self):
-        rmtree(self.__dir_path)
+        try:
+            rmtree(self.__dir_path)
+        except:
+            pass
