@@ -9,7 +9,10 @@ class TemporaryFilesManager:
 
     def __init__(self, dir_path: str) -> None:
         if not exists(dir_path):
-            mkdir(dir_path)
+            try:
+                mkdir(dir_path)
+            except:
+                pass
 
         self.__dir_path: str = dir_path
 

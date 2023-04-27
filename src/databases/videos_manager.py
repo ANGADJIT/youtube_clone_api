@@ -13,7 +13,7 @@ from uuid import uuid4
 from typing import List
 from models.models import Subscription
 from sqlalchemy import and_
-from models.models import UserInfo
+from models.models import UserInfo, Likes
 from utils.enums import VideoType
 
 
@@ -221,15 +221,31 @@ class VideosManager:
 
         return count
 
-    def like_video(self, video_id: str) -> None:
+    def like_video(self, video_id: str, user_id: str) -> None:
         video = self.__db.query(Videos).filter(Videos.id == video_id)
 
         if video is not None:
+            # check is video already liked by user or not
+            likes_info = self.__db.query(Likes).filter(
+                and_(Likes.video_id == video_id, Likes.user_id == user_id))
+            
+            lk = likes_info.first()
+
+
+            if likes_info.first() is not None:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={
+                                    'error': 'Already liked the video'})
+
             video_copy: dict = video.first().as_dict()
 
             video_copy['video_likes'] += 1
 
             video.update(video_copy, synchronize_session=False)
+
+            # add likes meta data
+            likes_info = Likes(**{'user_id': user_id, 'video_id': video_id})
+            self.__db.add(likes_info)
+
             self.__db.commit()
 
         else:
@@ -298,4 +314,13 @@ class VideosManager:
 
         return video.video_likes
 
+    def get_channel_name(self, user_id: str) -> str:
+        try:
+            user_info = self.__db.query(
+                UserInfo).filter(UserInfo.id == user_id)
 
+            return user_info.first().channel_name
+
+        except:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={
+                                'error': 'User ID not found'})

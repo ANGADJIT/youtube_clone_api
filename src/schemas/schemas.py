@@ -97,3 +97,6 @@ class ChannelProfileResponse(UserProfileResponse):
 class Likes(BaseModel):
     likes: int
     counted_at: str
+
+class ChannelNameResponse(BaseModel):
+    channel_name: str

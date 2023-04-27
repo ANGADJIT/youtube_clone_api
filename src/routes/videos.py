@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response, status, Query
 from fastapi.websockets import WebSocket
 from sqlalchemy.orm import Session
 from models.models import Videos
-from schemas.schemas import ChannelProfileResponse, UserProfileResponse, VideoResponse, SubscriptionCheck, SubscriptionCount, UserChannelResponse, Likes
+from schemas.schemas import ChannelNameResponse, ChannelProfileResponse, UserProfileResponse, VideoResponse, SubscriptionCheck, SubscriptionCount, UserChannelResponse, Likes
 from utils.jwt_token_manager import JwtTokenManger
 from utils.base_postgres_orm import base_postgres_orm
 from databases.videos_manager import VideosManager
@@ -72,7 +72,7 @@ class VideosRouter:
         def like_video(video_id: str, db: Session = Depends(base_postgres_orm.db), auth_data: dict = Depends(self.__token_manager.get_current_user)):
             manager = VideosManager(db=db, headers={}, for_websocket=False)
 
-            manager.like_video(video_id=video_id)
+            manager.like_video(video_id=video_id, user_id=auth_data['user_id'])
 
             return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -141,6 +141,16 @@ class VideosRouter:
 
             return {
                 'profile_url': url
+            }
+
+        @self.__router.get('/channel_name/{user_id}', response_model=ChannelNameResponse)
+        def get_channel_name(user_id: str, db: Session = Depends(base_postgres_orm.db), auth_data: dict = Depends(self.__token_manager.get_current_user)):
+            manager = VideosManager(db=db, headers={}, for_websocket=False)
+
+            channel_name: str = manager.get_channel_name(user_id=user_id)
+
+            return {
+                'channel_name': channel_name
             }
 
         @self.__router.websocket('/upload')
