@@ -90,6 +90,8 @@ class VideosManager:
                 resolution = (426, 240)
             elif 144 in resolution or 256 in resolution:
                 resolution = (256, 144)
+            else:
+                resolution = (256, 144)
 
             video_file.close()
 
@@ -228,9 +230,8 @@ class VideosManager:
             # check is video already liked by user or not
             likes_info = self.__db.query(Likes).filter(
                 and_(Likes.video_id == video_id, Likes.user_id == user_id))
-            
-            lk = likes_info.first()
 
+            lk = likes_info.first()
 
             if likes_info.first() is not None:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={
