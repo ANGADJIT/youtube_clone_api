@@ -75,10 +75,28 @@ class UrlResponse(BaseModel):
 class SubscriptionCheck(BaseModel):
     is_subscribed: bool
 
+
 class SubscriptionCount(BaseModel):
     count: int
     counted_at: str
 
+
 class UserChannelResponse(BaseModel):
     channel_name: str
     profile_url: str
+
+
+class UserProfileResponse(BaseModel):
+    profile_url: str
+
+
+class ChannelProfileResponse(UserProfileResponse):
+    pass
+
+
+class Likes(BaseModel):
+    likes: int
+    counted_at: str
+
+class ChannelNameResponse(BaseModel):
+    channel_name: str

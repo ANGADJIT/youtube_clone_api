@@ -78,3 +78,14 @@ class Subscription(Base):
         'UserInfo_Entity.id'), nullable=False, comment='user whose channel is subscribed')
     user_who_subcribed = Column(UUID, ForeignKey(
         'UserInfo_Entity.id'), nullable=False, comment='user who is subscribing the channel')
+
+
+class Likes(Base):
+
+    __tablename__ = 'Likes_Entity'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID, ForeignKey('UserInfo_Entity.id'),
+                     comment='user id', nullable=False)
+    video_id = Column(UUID, ForeignKey('Videos_Entity.id'),
+                      comment='video id', nullable=False)
